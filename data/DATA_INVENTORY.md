@@ -13,9 +13,11 @@ Basé sur les 5 sources listées en section 4.1 du draft (`paper/draft_v0.md`), 
 | 3 | **AIOE (Felten, Raj & Seamans 2021)** | ✅ Collecté | `data/raw/exposure_indices/felten_aioe/AIOE_DataAppendix.xlsx` | [github.com/AIOE-Data/AIOE](https://github.com/AIOE-Data/AIOE) |
 | 4 | **Pizzinelli et al. 2023 (IMF WP 23/216)** | ✅ Papier collecté (PDF) — pas de fichier de réplication public trouvé | `data/raw/literature/pizzinelli_et_al_2023_imf_wp23216.pdf` | [imf.org WP 23/216](https://www.imf.org/-/media/files/publications/wp/2023/english/wpiea2023216-print-pdf.pdf) |
 | 5 | **Crosswalk ISCO-08 ↔ SOC** | ✅ Collecté (version PDF, substitut) | `data/raw/crosswalks/onetsoc_to_isco08_crosswalk_IBS.pdf` | [IBS crosswalk](https://ibs.org.pl/wp-content/uploads/2022/11/onetsoc_to_isco_cws_ibs_en1-1.pdf) |
-| 6 | **DATAFID 2023 (accès TIC ménages)** — source retenue pour l'ajustement TIC (Spécification B, section 4.4) | ✅ Rapport + questionnaire collectés · 🟡 Micro-données à fournir en interne (ANStat) | `data/raw/datafid/` | [anstat.ci — étude DATAFID](https://www.anstat.ci/etude-details/3e67fa3d4bbf89f8762a8ef09c5b21f64962bf28ccae2e000130cc374ebf6b9a44612b1e7803a24e175086252e1ab3a092412fbfef9c39833e2f8cb1e4527131zbjhKkmiRIInJ1dFJPS-iIpc_8-nx0JiPlur4YrrgWg/1) |
+| 6 | **DATAFID 2023 (accès TIC ménages/entreprises)** — source retenue pour l'ajustement TIC (Spécification B, section 4.4) | ✅ Micro-données fournies et inventoriées (2026-08-13) — 3 bases : CM (1714 obs, ménages), Entreprise (462 obs, 284 var.), Individu (6643 obs, 332 var.) | `data/raw/datafid/extracted/` (CM_ano, Entreprise_DATAFID_ANO_VF_22-07-2024, Individu_DATAFID_ano — `.dta`/`.sav`) ; inventaire agrégé : `scripts/_logs/datafid_variable_inventory.log` | [anstat.ci — étude DATAFID](https://www.anstat.ci/etude-details/3e67fa3d4bbf89f8762a8ef09c5b21f64962bf28ccae2e000130cc374ebf6b9a44612b1e7803a24e175086252e1ab3a092412fbfef9c39833e2f8cb1e4527131zbjhKkmiRIInJ1dFJPS-iIpc_8-nx0JiPlur4YrrgWg/1) |
 | 7 | **EHCVM 2021** (accès TIC ménages, en réserve) | ✅ Fourni par l'utilisateur | `data/raw/ehcvm/` (Datain/Dataout/Programs/Documents) | [microdata.worldbank.org/catalog/6273](https://microdata.worldbank.org/index.php/catalog/6273) |
 | 8 | **Anthropic Economic Index** | ✅ Collecté (fichiers clés) | `data/raw/anthropic_economic_index/` | [huggingface.co/datasets/Anthropic/EconomicIndex](https://huggingface.co/datasets/Anthropic/EconomicIndex) |
+| 9 | **BLS OEWS (poids d'emploi national par SOC)** — pondération de l'agrégation many-to-many du crosswalk (section 4.2) | ✅ Collecté via le miroir CRAN `oews2020` (millésime mai 2020 — le site bls.gov bloque le téléchargement automatisé par protection anti-bot, même constat que pour le crosswalk officiel BLS ci-dessous) | `data/raw/exposure_indices/bls_oews/oews2020_national_soc_employment.csv` | [cran.r-project.org/package=oews2020](https://cran.r-project.org/package=oews2020) |
+| 10 | **OpenAI Signals (usage ChatGPT)** — second point de vue sur l'usage observé, en parallèle de l'AEI (section 5.3) | ✅ Collecté (25 CSV + dictionnaire de données) | `data/raw/openai_signals/` | [openai.com/signals](https://openai.com/signals/data/) |
 
 ## Détail des fichiers collectés
 
@@ -25,6 +27,9 @@ Basé sur les 5 sources listées en section 4.1 du draft (`paper/draft_v0.md`), 
 
 ### Crosswalk
 - `crosswalks/onetsoc_to_isco08_crosswalk_IBS.pdf` — concordance O\*NET-SOC ↔ ISCO-08 (Institute for Structural Research, Pologne). **Note :** le fichier officiel BLS (`bls.gov/soc/isco_soc_crosswalk.xls`) est bloqué par une protection anti-bot (403 persistant même avec en-têtes navigateur) — à récupérer manuellement via navigateur si une version alternative est nécessaire pour croiser avec la version IBS.
+
+### BLS OEWS (poids d'emploi)
+- `bls_oews/oews2020_national_soc_employment.csv` — emploi national US par code SOC (mai 2020, tous secteurs, toutes catégories d'employeur combinées), 788 codes avec poids valide. Sert à pondérer l'agrégation many-to-many du crosswalk ISCO↔SOC (`scripts/03_construire_crosswalk_exposition_isco.R`). **Note :** comme pour le crosswalk ci-dessus, `bls.gov/oes/` bloque le téléchargement automatisé (403 anti-bot) ; contournement via le paquet CRAN `oews2020` (Christopher Mann), qui redistribue légalement les données BLS mai 2020. **Millésime problématique, pas seulement "plus ancien que souhaitable"** : découverte du 2026-08-13 (revue croisée Codex) — ce fichier mai 2020 contient en réalité des codes SOC **post-2018** (ex. `15-1251` présent, `15-1131` absent), pas du SOC2010 pur comme supposé initialement. Ceci crée une asymétrie de couverture des poids (95,8 % pour les appariements GPT, cohérents en millésime avec OEWS, contre seulement 83,6 % pour les appariements AIOE, en SOC2010 comme le crosswalk mais pas comme OEWS) — documenté en détail en Annexe A et Section 5.4 du draft, pas juste en Annexe D. Construit par `scripts/03a_extraire_poids_emploi_oews.R`.
 
 ### Anthropic Economic Index (release 2025-03-27 et 2025-09-15)
 - `automation_vs_augmentation_v2.csv` — répartition automation vs. augmentation par type d'interaction.
@@ -42,18 +47,20 @@ Basé sur les 5 sources listées en section 4.1 du draft (`paper/draft_v0.md`), 
 ### EHCVM 2021
 Dossier de travail complet fourni par l'utilisateur (pas seulement les micro-données) : `Datain/` (modules Ménage s00-s21, Commune, Auxiliaire — pondérations, prix, conversion calorique), `Dataout/` (agrégats construits : consommation, bien-être, indicateurs NSU, prix unitaires), `Programs/` (`.do` Stata de construction des indicateurs), `Documents/` (questionnaires `.xlsm`, notes méthodo pauvreté), `IO/` (tableaux entrées-sorties historiques CIV 1995-2023). Un doublon imbriqué (`Datain/Datain`, `Dataout/Dataout`, `Programs/Programs`, `Documents/Documents`, ~2,77 Go) a été supprimé le 2026-08-13. Le sous-dossier `reference_external/` (rapports ANARE, BCEAO, annuaire ANStat — hors-sujet pour ce papier) a été conservé tel quel à la demande de l'utilisateur. **Non ouvert** — même règle de confidentialité que l'ENE-M.
 
-### DATAFID (Enquête sur l'accès et l'utilisation des TIC par les ménages, 2023)
+### DATAFID (Enquête sur l'accès et l'utilisation des TIC par les ménages/entreprises, 2023)
 - `datafid/rapport_datafid_2023.pdf` — rapport d'enquête complet (1 728 ménages, 864 urbain/864 rural, 144 grappes) : équipement TIC des ménages, accès/usage internet et achats en ligne par individu.
 - `datafid/questionnaire_datafid_menages.pdf` — questionnaire ménage, utile pour identifier les variables exactes disponibles (dont le découpage par grand secteur d'activité retenu pour la Spécification B de l'ajustement TIC).
-- **Micro-données** : non trouvées en accès libre (absentes du portail NADA public `nada.anstat.ci`) — probablement accessibles en interne via le centre de calcul ANStat (`centredecalcul.anstat.ci`). À fournir par l'utilisateur comme pour l'ENE-M.
+- **Micro-données** : fournies par l'utilisateur le 2026-08-13 (`datafid/DATAFID.zip`, extrait sous `datafid/extracted/`) et inventoriées — voir la ligne 6 du tableau ci-dessus et mémoire projet `project-datafid-inventory`. Note : le découpage sectoriel réel (`SECTEUR`, base Entreprise) n'a que 3 catégories (primaire/secondaire/tertiaire), plus grossier que ce que la section 4.4 du draft supposait initialement.
 
 ### Littérature (référence, pas données structurées)
 - `literature/pizzinelli_et_al_2023_imf_wp23216.pdf` — papier complet (benchmarks 6 pays, tables d'exposition par ISCO en annexe, à extraire manuellement si besoin de reproduire leurs chiffres).
 
 ## Ce qui reste à obtenir
 
-1. **Micro-données DATAFID** — l'utilisateur fournira le fichier en interne (accès ANStat), le rapport et le questionnaire sont déjà collectés.
-2. **Crosswalk BLS xls officiel** (optionnel) — à télécharger manuellement via navigateur si la version IBS s'avère insuffisante pour l'agrégation many-to-many décrite en section 4.2 du draft.
+1. **Crosswalk-pont BLS SOC2010 ↔ SOC2018** — nécessaire pour réconcilier les scores GPT (SOC post-2018) avec le crosswalk IBS et AIOE (SOC2010) ; probablement bloqué par le même filtre anti-bot bls.gov que les autres fichiers BLS de ce projet — à chercher d'abord via un miroir public (CRAN, GitHub) avant de tenter le téléchargement manuel via navigateur.
+2. **Poids d'emploi OEWS réellement SOC2010** — découverte du 2026-08-13 (revue croisée Codex) : le fichier `oews2020_national_soc_employment.csv` actuellement utilisé contient en réalité des codes post-2018 (ex. `15-1251` présent, `15-1131` absent), pas du SOC2010 pur comme supposé. Cela explique un taux de couverture des poids plus faible pour les appariements AIOE (83,6 %) que GPT (95,8 %) — l'inverse de ce qu'on attendrait si le fichier était SOC2010-pur. Un fichier OEWS réellement millésimé SOC2010 (années ≤2018) résoudrait ceci proprement.
 3. **Demombynes, Langbein & Weber (2025, World Bank PRWP 11057)** — cité comme concurrent direct mais pas encore collecté ; utile pour benchmark 25 pays. À ajouter si besoin.
 
-## Toutes les sources cœur du papier (ENE-M, exposition, crosswalk, Anthropic Economic Index, EHCVM) sont désormais réunies. Seule DATAFID micro-données manque encore.
+## Statut global
+
+Toutes les sources listées dans le tableau ci-dessus sont désormais réunies (y compris les micro-données DATAFID depuis le 2026-08-13). Les chantiers ouverts sont désormais des problèmes de **cohérence de millésime de nomenclature** (SOC2010 vs SOC2018, points 1-2 ci-dessus) plutôt que d'accès aux données — voir Annexe A et Section 5.4 du draft.
