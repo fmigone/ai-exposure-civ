@@ -1,0 +1,17 @@
+# Données — jamais versionnées (restent locales)
+/data/*
+!/data/DATA_INVENTORY.md
+*.rar
+*.dta
+
+# Logs d'exécution Stata/R (peuvent contenir des sorties dérivées de données restreintes)
+*.log
+
+# Fichiers temporaires
+_tmp_*
+
+# Artefacts R/Stata
+.Rhistory
+.RData
+.Rproj.user/
+*.smcl
